@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 
 var UserSchema = new Schema(
   {
-    _id: {type: Number, required: true},
+    TwitterID: {type: Number, required: true},
     username: {type: String, required: true},
     firstName: {type: String},
     lastName: {type: String},
