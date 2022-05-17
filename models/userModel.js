@@ -1,0 +1,17 @@
+var mongoose = require('mongoose');
+
+var Schema = mongoose.Schema;
+
+var UserSchema = new Schema(
+  {
+    _id: {type: Number, required: true},
+    username: {type: String, required: true},
+    firstName: {type: String},
+    lastName: {type: String},
+    followers: [{type: Number, ref: 'User'}],
+    image: {type: Buffer,}
+  }
+);
+
+//Export model
+module.exports = mongoose.model('UserModel', UserSchema);
