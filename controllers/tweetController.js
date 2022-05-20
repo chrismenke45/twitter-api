@@ -28,17 +28,26 @@ exports.index = (req, res, next) => {
     TweetModel.find({})
         .sort({ 'created': -1 })
         .limit(postQuantity || 12)
-        .exec((err, tweet_list) => {
-            if (err) { return next(err); }
-            res.json(tweet_list)
+        .exec()
+        .then(tweet_list => {
+            res.json(tweet_list);
+        })
+        .catch(err => {
+            return next(err);
         })
 }
 
 exports.tweet_detail = (req, res, next) => {
-    TweetModel.findById(req.params.id).populate('author').populate('comments').exec((err, tweet) => {
-        if (err) { return next(err); }
-        res.json(tweet)
-    })
+    TweetModel.findById(req.params.id)
+        .populate('author')
+        .populate('comments')
+        .exec()
+        .then(theTweet => {
+            res.json(theTweet);
+        })
+        .catch(err => {
+            return next(err);
+        })
 }
 
 exports.tweet_create = [
@@ -76,30 +85,36 @@ exports.tweet_create = [
 exports.tweet_delete = (req, res, next) => {
 
     //passport.authenticate('jwt', { session: false }),
-
+        let retweetsDelete = (tweet) => {
+            if (tweet.retweets.length != 0) {
+                Promise.all(
+                    tweet.retweets.map(theRetweet => {
+                        return TweetModel.findByIdAndRemove(theRetweet)
+                    })
+                )
+            }
+        }
+        let commentReferenceDelete = (tweet) => {
+            if (tweet.commentOf) {
+                TweetModel.findByIdAndUpdate(tweet.commentOf, {
+                    $pull : {comments: tweet._id}
+                }).exec()
+            }
+        }
+        let retweetReferenceDelete = (tweet) => {
+            if (tweet.retweetOf) {
+                TweetModel.findByIdAndUpdate(tweet.retweetOf, {
+                    $pull : {comments: tweet._id}
+                }).exec()
+            }
+        }
     TweetModel.findById(req.params.id)
         .then(theTweet => {
-            if (theTweet.comments.length != 0) {
-                theTweet.comments.map(theComment => {
-                    TweetModel.findByIdAndRemove(theComment, (err) => {
-                        if (err) { return next(err); }
-                    })
-                })
-            }
-            return theTweet
+            Promise.all([retweetsDelete(theTweet), commentReferenceDelete(theTweet), retweetReferenceDelete(theTweet)])
         })
-        .then(theTweet => {
-            if (theTweet.retweets.length != 0) {
-                theTweet.retweets.map(theRetweet => {
-                    TweetModel.findByIdAndRemove(theRetweet, (err) => {
-                        if (err) { return next(err); }
-                    })
-                })
-            }
-            return
-        })
-        .then(() => {
-            TweetModel.findByIdAndRemove(req.params.id)
+        .then((theTweet) => {
+            //console.log(theTweet)
+            TweetModel.findByIdAndDelete(req.params.id).exec()
         })
         .then(() => {
             res.json({
@@ -110,89 +125,57 @@ exports.tweet_delete = (req, res, next) => {
             return next(err)
         })
 }
-/*
-exports.tweet_delete = (req, res, next) => {
 
-    //passport.authenticate('jwt', { session: false }),
-
-    TweetModel.findById(req.params.id).exec((err, theTweet) => {
-        if (err) { return next(err); }
-        return theTweet
-    })
-        .then(theTweet => {
-            if (theTweet.comments.length != 0) {
-                theTweet.comments.map(theComment => {
-                    TweetModel.findByIdAndRemove(theComment, (err) => {
-                        if (err) { return next(err); }
-                    })
-                })
-            }
-            return theTweet
-        })
-        .then(theTweet => {
-            if (theTweet.retweets.length != 0) {
-                theTweet.retweets.map(theRetweet => {
-                    TweetModel.findByIdAndRemove(theRetweet, (err) => {
-                        if (err) { return next(err); }
-                    })
-                })
-            }
-            return
-        })
-        .then(() => {
-            TweetModel.findByIdAndRemove(req.params.id, function deletePost(err) {
-                if (err) { return next(err); }
-                return
-            })
-        })
-        .then(() => {
-            res.json({
-                message: "Post successfully deleted"
-            })
-        })
-        .catch(err => {
-            return next(err)
-        })
-}
-*/
 exports.retweet_create = (req, res, next) => {
-    let tweet = new TweetModel(
-        {
-            retweetOf: req.params.id,
+    let OGTweetId
+    TweetModel.findById(req.params.id).exec()
+        .then(theTweet => {
+            if (theTweet.retweetOf) {
+                OGTweetId = theTweet.retweetOf
+            } else {
+                OGTweetId = theTweet._id
+            }
+            return OGTweetId
         })
-        tweet.save()
-            .then(theTweet => {
-                console.log(theTweet)
-                TweetModel.updateOne({ _id: req.params.id }, {
-                    $push: { retweets: theTweet._id}
-                }).exec();
-            })
-            .then(() => {
-                res.json({
-                    'message': 'retweet posted'
+        .then(originalTweetId => {
+            let tweet = new TweetModel(
+                {
+                    retweetOf: originalTweetId,
                 })
+            return tweet.save()
+        })
+        .then(newTweet => {
+            console.log(OGTweetId, newTweet._id)
+            TweetModel.updateOne({ _id: OGTweetId }, {
+                $push: { retweets: newTweet._id }
+            }).exec();
+        })
+        .then(() => {
+            res.json({
+                'message': 'retweet posted'
             })
-            .catch(err => {
-                console.log(err);
-                return next(err);
-            })
+        })
+        .catch(err => {
+            return next(err);
+        })
 }
 
-exports.retweet_delete = (req, res, next) => {
-    TweetModel.findByIdAndDelete(req.params.retweetId, (err) => {
-        if (err) { return next(err) }
-    })
+/*exports.retweet_delete = (req, res, next) => {
+    TweetModel.findByIdAndDelete(req.params.retweetId)
         .then(() => {
             TweetModel.findByIdAndUpdate(req.params.id, {
                 $pull: { retweets: req.params.retweetId }
-            })
+            }).exec()
         })
         .then(() => {
             res.json({
                 message: 'Retweet successfully deleted'
             })
         })
-}
+        .catch(err => {
+            return next(err)
+        })
+}*/
 
 exports.comment_create = [
 
@@ -205,52 +188,70 @@ exports.comment_create = [
     (req, res, next) => {
         const errors = validationResult(req);
 
-        let tweet = new TweetModel(
-            {
-                commentOf: req.params.id,
-                text: req.body.text,
-                img: {
-                    data: (req.file ? fs.readFileSync(path.join(__dirname, '..', 'uploads', req.file.filename)) : null),
-                    contentType: 'image/png'
-                },
-
-            })
-
         if (!errors.isEmpty()) {
+            let tweet = new TweetModel(
+                {
+                    commentOf: req.params.id,
+                    text: req.body.text,
+                    img: {
+                        data: (req.file ? fs.readFileSync(path.join(__dirname, '..', 'uploads', req.file.filename)) : null),
+                        contentType: 'image/png'
+                    },
+                })
             res.json({ 'tweet': tweet, 'errors': errors.array() })
         } else {
-            tweet.save()
-            .then(theTweet => {
-                console.log(theTweet)
-                TweetModel.updateOne({ _id: req.params.id }, {
-                    $push: { comments: theTweet._id}
-                }).exec();
-            })
-            .then(() => {
-                res.json({
-                    'message': 'comment posted'
+
+            let OGTweetId
+
+            TweetModel.findById(req.params.id).exec()
+                .then(theTweet => {
+                    if (theTweet.retweetOf) {
+                        OGTweetId = theTweet.retweetOf
+                    } else {
+                        OGTweetId = theTweet._id
+                    }
+                    return OGTweetId
                 })
-            })
-            .catch(err => {
-                console.log(err);
-                return next(err);
-            })
+                .then(originalTweetId => {
+                    let tweet = new TweetModel(
+                        {
+                            commentOf: originalTweetId,
+                            text: req.body.text,
+                            img: {
+                                data: (req.file ? fs.readFileSync(path.join(__dirname, '..', 'uploads', req.file.filename)) : null),
+                                contentType: 'image/png'
+                            },
+                        })
+                    return tweet.save()
+                })
+                .then(theTweet => {
+                    TweetModel.updateOne({ _id: OGTweetId }, {
+                        $push: { comments: theTweet._id }
+                    }).exec();
+                })
+                .then(() => {
+                    res.json({
+                        'message': 'comment posted'
+                    })
+                })
+                .catch(err => {
+                    console.log(err);
+                    return next(err);
+                })
         }
     }
 ]
 
-exports.comment_delete = (req, res, next) => {
-    TweetModel.findByIdAndDelete(req.params.commentId, (err) => {
-        if (err) { return next(err) }
-    })
-        /*.then(() => {
+/*exports.comment_delete = (req, res, next) => {
+    TweetModel.findByIdAndDelete(req.params.commentId)
+        .then(() => {
             TweetModel.findByIdAndUpdate(req.params.id, {
                 $pull: { comments: req.params.commentId }
-            })
-        })*/
+            }).exec()
+        })
         .then(() => {
             res.json({
                 message: 'Comment successfully deleted'
             })
         })
-}
+}*/

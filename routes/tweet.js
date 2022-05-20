@@ -13,10 +13,10 @@ router.delete('/:id/delete', tweetController.tweet_delete)
 
 router.post('/:id/retweet', tweetController.retweet_create)
 
-router.delete('/:id/retweet/:retweetId/delete', tweetController.retweet_delete)
+//router.delete('/:id/retweet/:retweetId/delete', tweetController.retweet_delete)
 
 router.post('/:id/comment', tweetController.comment_create)
 
-router.delete('/:id/comment/:commentId/delete', tweetController.comment_delete)
+//router.delete('/:id/comment/:commentId/delete', tweetController.comment_delete)
 
 module.exports = router;
