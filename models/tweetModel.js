@@ -5,8 +5,9 @@ var Schema = mongoose.Schema;
 let TweetSchema = new Schema(
     {
         text: { type: String, maxlength: 140 },
-        author: { type: Schema.Types.ObjectId, required: true},
+        author: { type: Schema.Types.ObjectId },
         retweetOf: { type: Schema.Types.ObjectId, ref: 'TweetSchema' },
+        commentOf: { type: Schema.Types.ObjectId, ref: 'TweetSchema'},
         comments: [{ type: Schema.Types.ObjectId, ref: 'TweetSchema' }],
         likes: [{ type: Number}],
         retweets: [{ type: Schema.Types.ObjectId, ref: 'TweetSchema' }],
