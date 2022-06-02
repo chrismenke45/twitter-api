@@ -1,16 +1,20 @@
 var createError = require('http-errors');
 var express = require('express');
+var session = require('express-session')
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config()
 let mongoose = require('mongoose');
+let cors = require('cors')
 
 
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-let tweetRouter = require('./routes/tweet')
+let tweetRouter = require('./routes/tweet');
+const passport = require('passport');
+require('./auth/passport')
 
 var mongoDB = process.env.mongoDB_key
 mongoose.connect(mongoDB, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -27,6 +31,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({ secret: process.env.SESSION_SECRET }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.use(cors());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
@@ -45,6 +55,7 @@ app.use(function(err, req, res, next) {
 
   // render the error page
   res.status(err.status || 500);
+  console.log(err.message)
   res.json({
     'message': 'error',
     'error': err.message,

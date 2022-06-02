@@ -1,4 +1,4 @@
-let TweetModel = require('../models/TweetModel')
+let TweetModel = require('../models/tweetModel')
 //let UserModel = require('../models/UserModel')
 //let async = require('async')
 const { body, validationResult } = require('express-validator');

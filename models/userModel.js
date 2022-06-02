@@ -6,8 +6,7 @@ var UserSchema = new Schema(
   {
     TwitterID: {type: Number, required: true},
     username: {type: String, required: true},
-    firstName: {type: String},
-    lastName: {type: String},
+    chosenName: {type: String},
     followers: [{type: Number, ref: 'User'}],
     image: {type: Buffer,}
   }

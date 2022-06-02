@@ -1,9 +1,10 @@
 var express = require('express');
 var router = express.Router();
+let userController = require('../controllers/userController')
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
-});
+router.get('/auth/twitter', userController.login_get);
+
+router.get('/auth/twitter/callback', userController.loggedin_get)
 
 module.exports = router;
