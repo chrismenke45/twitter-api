@@ -4,11 +4,12 @@ var Schema = mongoose.Schema;
 
 var UserSchema = new Schema(
   {
-    TwitterID: {type: Number, required: true},
+    twitterId: {type: String, required: true},
     username: {type: String, required: true},
     chosenName: {type: String},
     followers: [{type: Number, ref: 'User'}],
-    image: {type: Buffer,}
+    profile_image: {type: String,},
+    background_image: {type: String}
   }
 );
 
