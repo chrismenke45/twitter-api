@@ -25,17 +25,17 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
                             ...theNewUser,
                             expiresIn: expireTime.toString()
                         }
-                        const token = jwt.sign(theNewUser, process.env.jwtSecret, { expiresIn: "1h" });
+                        const token = jwt.sign(theNewUser._doc, process.env.jwtSecret, { expiresIn: "1h" });
                         res.cookie('jwt', token, { maxAge: 3999 });
-                        res.cookie('user', encodeURIComponent(JSON.stringify(theNewUser)), { maxAge: 3999 })
+                        res.cookie('user', encodeURIComponent(JSON.stringify(theNewUser._doc)), { maxAge: 3999 })
                         res.redirect(clientURL + '/set-credentials')
                     })
             } else {
                 currentUser = {
-                    ...currentUser,
+                    ...currentUser._doc,
                     expiresIn: expireTime.toString()
                 }
-                const token = jwt.sign(user, process.env.jwtSecret, { expiresIn: "1h" });
+                const token = jwt.sign(currentUser, process.env.jwtSecret, { expiresIn: "1h" });
                 res.cookie('jwt', token, { maxAge: 3999 });
                 res.cookie('user', encodeURIComponent(JSON.stringify(currentUser)), { maxAge: 3999 })
                 res.redirect(clientURL + '/set-credentials')

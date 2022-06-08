@@ -28,6 +28,7 @@ exports.index = (req, res, next) => {
     TweetModel.find({})
         .sort({ 'created': -1 })
         .limit(postQuantity || 12)
+        .populate('author')
         .exec()
         .then(tweet_list => {
             res.json(tweet_list);
@@ -52,17 +53,20 @@ exports.tweet_detail = (req, res, next) => {
 
 exports.tweet_create = [
 
-    //passport.authenticate('jwt', { session: false }),
-
+    passport.authenticate('jwt', { session: false }),
+    
     upload.single('img'),
 
     body('text', 'Tweets are limited to 140 characters').trim().isLength({ max: 140 }).escape(),
+    
 
     (req, res, next) => {
+        console.log(req.user)
         const errors = validationResult(req);
 
         let tweet = new TweetModel(
             {
+                author: req.user._id,
                 text: req.body.text,
                 img: {
                     data: (req.file ? fs.readFileSync(path.join(__dirname, '..', 'uploads', req.file.filename)) : null),
@@ -126,6 +130,32 @@ exports.tweet_delete = (req, res, next) => {
         })
 }
 
+exports.like_put = [
+    passport.authenticate('jwt', { session: false }),
+
+    (req, res, next) => {
+        TweetModel.updateOne({ _id: req.params.id }, {
+            $addToSet: { likes: req.user._id }
+        }).exec()
+        .then(() => {
+            res.json({message: `Tweet ${req.params.id} liked by User ${req.user._id}`})
+        })
+    }
+]
+
+exports.unlike_put = [
+    passport.authenticate('jwt', { session: false }),
+
+    (req, res, next) => {
+        TweetModel.updateOne({ _id: req.params.id }, {
+            $pull: { likes: req.user._id }
+        }).exec()
+        .then(() => {
+            res.json({message: `Tweet ${req.params.id} unliked by User ${req.user._id}`})
+        })
+    }
+]
+
 exports.retweet_create = (req, res, next) => {
     let OGTweetId
     TweetModel.findById(req.params.id).exec()
@@ -145,7 +175,6 @@ exports.retweet_create = (req, res, next) => {
             return tweet.save()
         })
         .then(newTweet => {
-            console.log(OGTweetId, newTweet._id)
             TweetModel.updateOne({ _id: OGTweetId }, {
                 $push: { retweets: newTweet._id }
             }).exec();

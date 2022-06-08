@@ -32,16 +32,12 @@ passport.use(new JWTStrategy({
   function (jwtPayload, cb) {
   
     //find the user in db 
-    return UserModel.findById(jwtPayload.id)
+    return UserModel.findById(jwtPayload._id)
         .then(user => {
-            //return cb(null, user);
-          if (user.admin) {
             return cb(null, user);
-          } else {
-            return cb(null)
-          }
         })
         .catch(err => {
+          console.log(err);
             return cb(err);
         });
   }
