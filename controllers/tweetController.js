@@ -31,6 +31,14 @@ exports.index = (req, res, next) => {
         .populate('author')
         .populate('retweetOf')
         .populate('retweets')
+        //.populate('retweetOf.author')
+        .populate({
+            path: 'retweetOf',
+            populate: {
+                path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+            },
+        })
         .exec()
         .then(tweet_list => {
             res.json(tweet_list);
@@ -56,11 +64,11 @@ exports.tweet_detail = (req, res, next) => {
 exports.tweet_create = [
 
     passport.authenticate('jwt', { session: false }),
-    
+
     upload.single('img'),
 
     body('text', 'Tweets are limited to 140 characters').trim().isLength({ max: 140 }).escape(),
-    
+
 
     (req, res, next) => {
         console.log(req.user)
@@ -91,29 +99,29 @@ exports.tweet_create = [
 exports.tweet_delete = (req, res, next) => {
 
     //passport.authenticate('jwt', { session: false }),
-        let retweetsDelete = (tweet) => {
-            if (tweet.retweets.length != 0) {
-                Promise.all(
-                    tweet.retweets.map(theRetweet => {
-                        return TweetModel.findByIdAndRemove(theRetweet)
-                    })
-                )
-            }
+    let retweetsDelete = (tweet) => {
+        if (tweet.retweets.length != 0) {
+            Promise.all(
+                tweet.retweets.map(theRetweet => {
+                    return TweetModel.findByIdAndRemove(theRetweet)
+                })
+            )
         }
-        let commentReferenceDelete = (tweet) => {
-            if (tweet.commentOf) {
-                TweetModel.findByIdAndUpdate(tweet.commentOf, {
-                    $pull : {comments: tweet._id}
-                }).exec()
-            }
+    }
+    let commentReferenceDelete = (tweet) => {
+        if (tweet.commentOf) {
+            TweetModel.findByIdAndUpdate(tweet.commentOf, {
+                $pull: { comments: tweet._id }
+            }).exec()
         }
-        let retweetReferenceDelete = (tweet) => {
-            if (tweet.retweetOf) {
-                TweetModel.findByIdAndUpdate(tweet.retweetOf, {
-                    $pull : {comments: tweet._id}
-                }).exec()
-            }
+    }
+    let retweetReferenceDelete = (tweet) => {
+        if (tweet.retweetOf) {
+            TweetModel.findByIdAndUpdate(tweet.retweetOf, {
+                $pull: { comments: tweet._id }
+            }).exec()
         }
+    }
     TweetModel.findById(req.params.id)
         .then(theTweet => {
             Promise.all([retweetsDelete(theTweet), commentReferenceDelete(theTweet), retweetReferenceDelete(theTweet)])
@@ -139,9 +147,9 @@ exports.like_put = [
         TweetModel.updateOne({ _id: req.params.id }, {
             $addToSet: { likes: req.user._id }
         }).exec()
-        .then(() => {
-            res.json({message: `Tweet ${req.params.id} liked by User ${req.user._id}`})
-        })
+            .then(() => {
+                res.json({ message: `Tweet ${req.params.id} liked by User ${req.user._id}` })
+            })
     }
 ]
 
@@ -152,9 +160,9 @@ exports.unlike_put = [
         TweetModel.updateOne({ _id: req.params.id }, {
             $pull: { likes: req.user._id }
         }).exec()
-        .then(() => {
-            res.json({message: `Tweet ${req.params.id} unliked by User ${req.user._id}`})
-        })
+            .then(() => {
+                res.json({ message: `Tweet ${req.params.id} unliked by User ${req.user._id}` })
+            })
     }
 ]
 
@@ -162,38 +170,38 @@ exports.retweet_create = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
-    let OGTweetId
-    TweetModel.findById(req.params.id).exec()
-        .then(theTweet => {
-            if (theTweet.retweetOf) {
-                OGTweetId = theTweet.retweetOf
-            } else {
-                OGTweetId = theTweet._id
-            }
-            return OGTweetId
-        })
-        .then(originalTweetId => {
-            let tweet = new TweetModel(
-                {
-                    retweetOf: originalTweetId,
-                    author: req.user._id
-                })
-            return tweet.save()
-        })
-        .then(newTweet => {
-            TweetModel.updateOne({ _id: OGTweetId }, {
-                $push: { retweets: newTweet._id }
-            }).exec();
-        })
-        .then(() => {
-            res.json({
-                'message': 'retweet posted'
+        let OGTweetId
+        TweetModel.findById(req.params.id).exec()
+            .then(theTweet => {
+                if (theTweet.retweetOf) {
+                    OGTweetId = theTweet.retweetOf
+                } else {
+                    OGTweetId = theTweet._id
+                }
+                return OGTweetId
             })
-        })
-        .catch(err => {
-            return next(err);
-        })
-}
+            .then(originalTweetId => {
+                let tweet = new TweetModel(
+                    {
+                        retweetOf: originalTweetId,
+                        author: req.user._id
+                    })
+                return tweet.save()
+            })
+            .then(newTweet => {
+                TweetModel.updateOne({ _id: OGTweetId }, {
+                    $push: { retweets: newTweet._id }
+                }).exec();
+            })
+            .then(() => {
+                res.json({
+                    'message': 'retweet posted'
+                })
+            })
+            .catch(err => {
+                return next(err);
+            })
+    }
 ]
 
 /*exports.retweet_delete = (req, res, next) => {
