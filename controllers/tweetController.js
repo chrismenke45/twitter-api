@@ -29,6 +29,8 @@ exports.index = (req, res, next) => {
         .sort({ 'created': -1 })
         .limit(postQuantity || 12)
         .populate('author')
+        .populate('retweetOf')
+        .populate('retweets')
         .exec()
         .then(tweet_list => {
             res.json(tweet_list);
@@ -156,7 +158,10 @@ exports.unlike_put = [
     }
 ]
 
-exports.retweet_create = (req, res, next) => {
+exports.retweet_create = [
+    passport.authenticate('jwt', { session: false }),
+
+    (req, res, next) => {
     let OGTweetId
     TweetModel.findById(req.params.id).exec()
         .then(theTweet => {
@@ -171,6 +176,7 @@ exports.retweet_create = (req, res, next) => {
             let tweet = new TweetModel(
                 {
                     retweetOf: originalTweetId,
+                    author: req.user._id
                 })
             return tweet.save()
         })
@@ -188,6 +194,7 @@ exports.retweet_create = (req, res, next) => {
             return next(err);
         })
 }
+]
 
 /*exports.retweet_delete = (req, res, next) => {
     TweetModel.findByIdAndDelete(req.params.retweetId)

@@ -46,52 +46,20 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
         })
 }]
 
-/*exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (req, res, next) => {
-    let user = req.user
-    var expireTime = new Date();
-    expireTime.setHours(expireTime.getHours() + 1);
-    let clientUserObject = {
-        firstName: user.name.givenName,
-        fullName: user.displayName,
-        photo: user.photos[0].value,
-        expiresIn: expireTime.toString(),
-    }
-    UserModel.findById(user.id)
-        .then(currentUser => {
+exports.suggested_get = [
+    passport.authenticate('jwt', { session: false }),
 
-            if (!currentUser) {
-                let newUser = new UserModel({
-                    _id: parseInt(user.id),
-                    username: user.displayName,
-                    admin: false,
-                })
-                newUser.save()
-                    .then(theNewUser => {
-                        clientUserObject.admin = false;
-                        const token = jwt.sign(user, process.env.jwtSecret);
-                        res.cookie('jwt', token, { maxAge: 3999 });
-                        res.cookie('user', encodeURIComponent(JSON.stringify(clientUserObject)), { maxAge: 3999 })
-                        res.redirect(url + '/set-credentials')
-                    })
-                    .catch(err => {
-                        next(err)
-                    })
-*/
-/*currentUser.admin = true;
-currentUser.save()
-.then(NU => {
-console.log(NU)
-})*/
-/*
-            } else {
-                clientUserObject.admin = currentUser.admin
-                const token = jwt.sign(user, process.env.jwtSecret, {expiresIn: "1h"});
-                res.cookie('jwt', token, { maxAge: 3999 });
-                res.cookie('user', encodeURIComponent(JSON.stringify(clientUserObject)), { maxAge: 3999 })
-                res.redirect(url + '/set-credentials')
-            }
+    (req, res, next) => {
+        UserModel.find({"_id": { $ne: req.user._id }})
+        .sort({ 'created': -1 })
+        .limit(3)
+        .exec()
+        .then(user_list => {
+            res.json(user_list);
         })
         .catch(err => {
-            next(err)
+            return next(err);
         })
-}]*/
+
+    }
+]
