@@ -9,4 +9,6 @@ router.get('/auth/twitter/callback', userController.loggedin_get)
 
 router.get('/suggested', userController.suggested_get)
 
+router.get('/info/:userid', userController.user_get)
+
 module.exports = router;

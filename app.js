@@ -13,6 +13,7 @@ let cors = require('cors')
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 let tweetRouter = require('./routes/tweet');
+let profileRouter = require('./routes/profile')
 const passport = require('passport');
 require('./auth/passport')
 
@@ -41,6 +42,7 @@ app.use(cors());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/tweet', tweetRouter);
+app.use('/profile', profileRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

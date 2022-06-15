@@ -10,8 +10,8 @@ router.get('/:userid/media', profileController.media_get)
 
 router.get('/:userid/likes', profileController.likes_get)
 
-router.put(':userid/follow', profileController.follow_put)
+router.put('/:userid/follow', profileController.follow_put)
 
-router.put(':userid/unfollow', profileController.unfollow_put)
+router.put('/:userid/unfollow', profileController.unfollow_put)
 
 module.exports = router;

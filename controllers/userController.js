@@ -63,3 +63,19 @@ exports.suggested_get = [
 
     }
 ]
+
+exports.user_get = [
+    passport.authenticate('jwt', { session: false }),
+
+    (req, res, next) => {
+        UserModel.findById(req.params.userid)
+        .exec()
+        .then(user => {
+            res.json(user);
+        })
+        .catch(err => {
+            return next(err);
+        })
+
+    }
+]

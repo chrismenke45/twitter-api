@@ -1,12 +1,13 @@
 let TweetModel = require('../models/tweetModel')
 let UserModel = require('../models/userModel')
+const passport = require('passport');
 
 exports.tweets_get = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
         let postQuantity = req.query.postQuantity;
-        TweetModel.find({ author: { $eq: req.params.userid } }, { commentOf: $or[{ $exists: false }, { $eq: null }] })
+        TweetModel.find({ $and: [{ author: { $eq: req.params.userid } }, { $or: [{commentOf: { $exists: false } }, {commentOf: { $eq: null } }] }] } )
             .sort({ 'created': -1 })
             .limit(postQuantity || 12)
             .populate('author')
@@ -62,7 +63,7 @@ exports.media_get = [
 
     (req, res, next) => {
         let postQuantity = req.query.postQuantity;
-        TweetModel.find($or[{ author: { $eq: req.params.userid } }, { likes: { $in: [req.user._id] } }])
+        TweetModel.find({ $or: [{ author: { $eq: req.params.userid } }, { likes: { $in: [req.user._id] } }] })
             .sort({ 'created': -1 })
             .limit(postQuantity || 12)
             .populate('author')
