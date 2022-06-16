@@ -50,9 +50,17 @@ exports.index = (req, res, next) => {
 
 exports.tweet_detail = (req, res, next) => {
     TweetModel.findById(req.params.id)
-        .populate('author')
-        .populate('comments')
-        .exec()
+    .populate('author')
+    .populate('retweetOf')
+    .populate('retweets')
+    .populate({
+        path: 'retweetOf',
+        populate: {
+            path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+            select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+        },
+    })
+    .exec()
         .then(theTweet => {
             res.json(theTweet);
         })
