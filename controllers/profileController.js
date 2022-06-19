@@ -20,6 +20,14 @@ exports.tweets_get = [
                     select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
                 },
             })
+            .populate('commentOf')
+            .populate({
+                path: 'commentOf',
+                populate: {
+                    path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                },
+            })
             .exec()
             .then(tweet_list => {
                 res.json(tweet_list);
@@ -43,6 +51,14 @@ exports.replies_get = [ //this is named replies but gets tweets AND replies
             .populate('retweets')
             .populate({
                 path: 'retweetOf',
+                populate: {
+                    path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                },
+            })
+            .populate('commentOf')
+            .populate({
+                path: 'commentOf',
                 populate: {
                     path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
                     select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
@@ -76,6 +92,14 @@ exports.media_get = [
                     select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
                 },
             })
+            .populate('commentOf')
+            .populate({
+                path: 'commentOf',
+                populate: {
+                    path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                },
+            })
             .exec()
             .then(tweet_list => {
                 res.json(tweet_list);
@@ -99,6 +123,14 @@ exports.likes_get = [
             .populate('retweets')
             .populate({
                 path: 'retweetOf',
+                populate: {
+                    path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                },
+            })
+            .populate('commentOf')
+            .populate({
+                path: 'commentOf',
                 populate: {
                     path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
                     select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need

@@ -25,7 +25,7 @@ var upload = multer({ storage: storage });
 
 exports.index = (req, res, next) => {
     let postQuantity = req.query.postQuantity;
-    TweetModel.find({})
+    TweetModel.find({ $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] })
         .sort({ 'created': -1 })
         .limit(postQuantity || 12)
         .populate('author')
@@ -37,6 +37,13 @@ exports.index = (req, res, next) => {
             populate: {
                 path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
                 select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+            },
+        })
+        .populate({
+            path: 'commentOf',
+            populate: {
+                path: 'author', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                select: '_id chosenName username' //dont return all key/values, only the ones that we need
             },
         })
         .exec()
@@ -69,20 +76,20 @@ exports.tweet_detail = [
         }
         const findComments = (theid) => {
             return TweetModel.find({ commentOf: theid })
+                .sort({ 'created': -1 })
+                .limit(12)
                 .populate('author')
-                .populate('retweetOf')
                 .populate('retweets')
                 .populate({
-                    path: 'retweetOf',
+                    path: 'commentOf',
                     populate: {
-                        path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
-                        select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                        path: 'author', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                        select: '_id chosenName username' //dont return all key/values, only the ones that we need
                     },
                 })
         }
         Promise.all([findTweet(req.params.id), findComments(req.params.id)])
             .then(theTweet => {
-                console.log(theTweet)
                 res.json(theTweet);
             })
             .catch(err => {
@@ -101,7 +108,6 @@ exports.tweet_create = [
 
 
     (req, res, next) => {
-        console.log(req.user)
         const errors = validationResult(req);
 
         let tweet = new TweetModel(
@@ -158,7 +164,6 @@ exports.tweet_delete = [
                 Promise.all([retweetsDelete(theTweet), commentReferenceDelete(theTweet), retweetReferenceDelete(theTweet)])
             })
             .then((theTweet) => {
-                //console.log(theTweet)
                 TweetModel.findByIdAndDelete(req.params.id).exec()
             })
             .then(() => {
@@ -207,19 +212,44 @@ exports.retweet_create = [
             .then(theTweet => {
                 if (theTweet.retweetOf) {
                     OGTweetId = theTweet.retweetOf
+                } else if (theTweet.commentOf) {
+                    OGTweetId = theTweet.commentOf
                 } else {
                     OGTweetId = theTweet._id
                 }
                 return OGTweetId
             })
             .then(originalTweetId => {
-                let tweet = new TweetModel(
-                    {
-                        retweetOf: originalTweetId,
-                        author: req.user._id
+                TweetModel.findById(originalTweetId).populate('retweets').exec()
+                    .then(originalTweet => {
+                        if (originalTweet.retweets && originalTweet.retweets.some(e => e.author.toString() === req.user._id.toString())) {
+                            res.json({
+                                'message': 'user already retweeted '
+                            })
+                        } else {
+                            let tweet = new TweetModel(
+                                {
+                                    retweetOf: originalTweetId,
+                                    author: req.user._id
+                                })
+                            tweet.save()
+                            .then(newTweet => {
+                                TweetModel.updateOne({ _id: OGTweetId }, {
+                                    $push: { retweets: newTweet._id }
+                                }).exec();
+                            })
+                            .then(() => {
+                                res.json({
+                                    'message': 'retweet posted'
+                                })
+                            })
+                            .catch(err => {
+                                return next(err);
+                            })
+                        }
+
                     })
-                return tweet.save()
-            })
+            })/*
             .then(newTweet => {
                 TweetModel.updateOne({ _id: OGTweetId }, {
                     $push: { retweets: newTweet._id }
@@ -229,7 +259,7 @@ exports.retweet_create = [
                 res.json({
                     'message': 'retweet posted'
                 })
-            })
+            })*/
             .catch(err => {
                 return next(err);
             })
@@ -239,7 +269,7 @@ exports.retweet_create = [
 
 exports.comment_create = [
 
-    //passport.authenticate('jwt', { session: false }),
+    passport.authenticate('jwt', { session: false }),
 
     upload.single('img'),
 
@@ -267,6 +297,8 @@ exports.comment_create = [
                 .then(theTweet => {
                     if (theTweet.retweetOf) {
                         OGTweetId = theTweet.retweetOf
+                    } else if (theTweet.commentOf) {
+                        OGTweetId = theTweet.commentOf
                     } else {
                         OGTweetId = theTweet._id
                     }
@@ -281,6 +313,7 @@ exports.comment_create = [
                                 data: (req.file ? fs.readFileSync(path.join(__dirname, '..', 'uploads', req.file.filename)) : null),
                                 contentType: 'image/png'
                             },
+                            author: req.user._id
                         })
                     return tweet.save()
                 })
