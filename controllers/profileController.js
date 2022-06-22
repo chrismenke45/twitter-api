@@ -7,7 +7,7 @@ exports.tweets_get = [
 
     (req, res, next) => {
         let postQuantity = req.query.postQuantity;
-        TweetModel.find({ $and: [{ author: { $eq: req.params.userid } }, { $or: [{commentOf: { $exists: false } }, {commentOf: { $eq: null } }] }] } )
+        TweetModel.find({ $and: [{ author: { $eq: req.params.userid } }, { $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] }] })
             .sort({ 'created': -1 })
             .limit(postQuantity || 12)
             .populate('author')
@@ -150,37 +150,44 @@ exports.follow_put = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
-
-        let updateFollowee = (followerId, followeeId) => {
-            return UserModel.updateOne({ _id: followeeId }, {
-                $push: { followers: followerId }
+        if (req.user._id == req.params.userid) {
+            res.json({
+                'message': 'User cannot follow themselves'
             })
-        }
-
-        let updateFollower = (followerId, followeeId) => {
-            return UserModel.updateOne({ _id: followerId }, {
-                $push: { following: followeeId }
-            })
-        }
-        Promise.all([updateFollowee(req.user._id.toString(), req.params.userid), updateFollower(req.user._id.toString(), req.params.userid)])
-            .then(() => {
-                res.json({
-                    'message': 'User ' + req.params.userid + ' followed by ' + req.user._id
+        } else {
+            let updateFollowee = (followerId, followeeId) => {
+                return UserModel.updateOne({ _id: followeeId }, {
+                    $push: { followers: followerId }
                 })
-            })
-            .catch((err) => {
-                res.json({
-                    'message': 'Error:' + err
+            }
+
+            let updateFollower = (followerId, followeeId) => {
+                return UserModel.updateOne({ _id: followerId }, {
+                    $push: { following: followeeId }
                 })
-            })
+            }
+            Promise.all([updateFollowee(req.user._id.toString(), req.params.userid), updateFollower(req.user._id.toString(), req.params.userid)])
+                .then(() => {
+                    res.json({
+                        'message': 'User ' + req.params.userid + ' followed by ' + req.user._id
+                    })
+                })
+                .catch((err) => {
+                    res.json({
+                        'message': 'Error:' + err
+                    })
+                })
+        }
     }
+
+
 ]
 
 exports.unfollow_put = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
-        
+
 
         let updateUnfollowee = (followerId, followeeId) => {
             return UserModel.updateOne({ _id: followeeId }, {
@@ -195,7 +202,7 @@ exports.unfollow_put = [
         }
         Promise.all([updateUnfollowee(req.user._id, req.params.userid), updateUnfollower(req.user._id, req.params.userid)])
             .then(() => {
-                
+
                 res.json({
                     'message': 'User ' + req.params.userid + ' unfollowed by ' + req.user._id
                 })
