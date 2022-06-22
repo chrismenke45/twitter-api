@@ -43,7 +43,7 @@ exports.index = (req, res, next) => {
             path: 'commentOf',
             populate: {
                 path: 'author', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
-                select: '_id chosenName username' //dont return all key/values, only the ones that we need
+                select: '_id chosenName profile_image retweets username' //dont return all key/values, only the ones that we need
             },
         })
         .exec()
@@ -83,10 +83,18 @@ exports.tweet_detail = [
                 .populate({
                     path: 'commentOf',
                     populate: {
-                        path: 'author', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
-                        select: '_id chosenName username' //dont return all key/values, only the ones that we need
+                        path: 'author', //need 'author' of 'retweetOf' so origional tweet can be displayed
+                        select: '_id chosenName profile_image username' //dont return all key/values, only the ones that we need
                     },
                 })
+                .populate({
+                    path: 'commentOf',
+                    populate: {
+                        path: 'retweets',
+                        select: 'author'
+                    }
+                })
+                
         }
         Promise.all([findTweet(req.params.id), findComments(req.params.id)])
             .then(theTweet => {
@@ -137,7 +145,8 @@ exports.tweet_delete = [
 
     (req, res, next) => {
         let retweetsDelete = (tweet) => {
-            if (tweet.retweets.length != 0) {
+            console.log(tweet)
+            if (tweet.retweets && tweet.retweets.length != 0) {
                 Promise.all(
                     tweet.retweets.map(theRetweet => {
                         return TweetModel.findByIdAndRemove(theRetweet)

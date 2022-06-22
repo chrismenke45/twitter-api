@@ -7,8 +7,8 @@ var UserSchema = new Schema(
     twitterId: {type: String, required: true},
     username: {type: String, required: true},
     chosenName: {type: String},
-    followers: [{type: Number, ref: 'UserModel'}],
-    following: [{type: Number, ref: 'UserModel'}],
+    followers: [{type: Schema.Types.ObjectId, ref: 'UserModel'}],
+    following: [{type: Schema.Types.ObjectId, ref: 'UserModel'}],
     profile_image: {type: String,},
     background_image: {type: String}
   }

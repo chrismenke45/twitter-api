@@ -152,17 +152,17 @@ exports.follow_put = [
     (req, res, next) => {
 
         let updateFollowee = (followerId, followeeId) => {
-            TweetModel.updateOne({ _id: followeeId }, {
+            return UserModel.updateOne({ _id: followeeId }, {
                 $push: { followers: followerId }
-            }).exec()
+            })
         }
 
         let updateFollower = (followerId, followeeId) => {
-            TweetModel.updateOne({ _id: followerId }, {
+            return UserModel.updateOne({ _id: followerId }, {
                 $push: { following: followeeId }
-            }).exec()
+            })
         }
-        Promise.all([updateFollowee(req.user._id, req.params.userid), updateFollower(req.user._id, req.params.userid)])
+        Promise.all([updateFollowee(req.user._id.toString(), req.params.userid), updateFollower(req.user._id.toString(), req.params.userid)])
             .then(() => {
                 res.json({
                     'message': 'User ' + req.params.userid + ' followed by ' + req.user._id
@@ -180,20 +180,22 @@ exports.unfollow_put = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
+        
 
         let updateUnfollowee = (followerId, followeeId) => {
-            TweetModel.updateOne({ _id: followeeId }, {
+            return UserModel.updateOne({ _id: followeeId }, {
                 $pull: { followers: followerId }
-            }).exec()
+            })
         }
 
         let updateUnfollower = (followerId, followeeId) => {
-            TweetModel.updateOne({ _id: followerId }, {
+            return UserModel.updateOne({ _id: followerId }, {
                 $pull: { following: followeeId }
-            }).exec()
+            })
         }
         Promise.all([updateUnfollowee(req.user._id, req.params.userid), updateUnfollower(req.user._id, req.params.userid)])
             .then(() => {
+                
                 res.json({
                     'message': 'User ' + req.params.userid + ' unfollowed by ' + req.user._id
                 })
