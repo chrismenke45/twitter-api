@@ -79,7 +79,7 @@ exports.media_get = [
 
     (req, res, next) => {
         let postQuantity = req.query.postQuantity;
-        TweetModel.find({ $or: [{ author: { $eq: req.params.userid } }, { likes: { $in: [req.user._id] } }] })
+        TweetModel.find({ $or: [{ author: { $eq: req.params.userid } }, { likes: { $in: [req.params.userid] } }] })
             .sort({ 'created': -1 })
             .limit(postQuantity || 12)
             .populate('author')

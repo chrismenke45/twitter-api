@@ -74,10 +74,10 @@ exports.tweet_detail = [
                     },
                 })
         }
-        const findComments = (theid) => {
+        const findComments = (theid, postQuantity) => {
             return TweetModel.find({ commentOf: theid })
                 .sort({ 'created': -1 })
-                .limit(12)
+                .limit(postQuantity || 12)
                 .populate('author')
                 .populate('retweets')
                 .populate({
@@ -96,7 +96,8 @@ exports.tweet_detail = [
                 })
                 
         }
-        Promise.all([findTweet(req.params.id), findComments(req.params.id)])
+        
+        Promise.all([findTweet(req.params.id), findComments(req.params.id, req.query.postQuantity)])
             .then(theTweet => {
                 res.json(theTweet);
             })

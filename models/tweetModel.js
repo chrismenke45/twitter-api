@@ -16,7 +16,7 @@ let TweetSchema = new Schema(
             data: Buffer,
             contentType: String
         },
-        created: { type: Date, default: Date.now },
+        created: { type: Date, default: Date.now, immutable: true },
     }
 )
 
