@@ -146,7 +146,6 @@ exports.tweet_delete = [
 
     (req, res, next) => {
         let retweetsDelete = (tweet) => {
-            console.log(tweet)
             if (tweet.retweets && tweet.retweets.length != 0) {
                 Promise.all(
                     tweet.retweets.map(theRetweet => {
