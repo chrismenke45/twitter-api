@@ -33,6 +33,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.enable('trust proxy');
 app.use(session({
   secret: process.env.SESSION_SECRET,
   proxy: true, // add this when behind a reverse proxy, if you need secure cookies
