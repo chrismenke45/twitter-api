@@ -37,7 +37,12 @@ app.use(session({ secret: process.env.SESSION_SECRET }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use(cors());
+const corsOptions = {
+  credentials: true,
+  ///..other options
+};
+
+app.use(cors(corsOptions));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
