@@ -33,7 +33,14 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({ secret: process.env.SESSION_SECRET }));
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  proxy: true, // add this when behind a reverse proxy, if you need secure cookies
+  cookie: {
+    secure: true,
+    maxAge: 3999
+  }
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -50,12 +57,12 @@ app.use('/tweet', tweetRouter);
 app.use('/profile', profileRouter);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
