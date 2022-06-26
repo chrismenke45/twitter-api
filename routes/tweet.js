@@ -5,6 +5,8 @@ let tweetController = require('../controllers/tweetController')
 /* GET home page. */
 router.get('/', tweetController.index)
 
+router.get('/following', tweetController.following_tweets_get)
+
 router.get('/:id', tweetController.tweet_detail)
 
 router.post('/create', tweetController.tweet_create)

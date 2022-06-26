@@ -55,6 +55,45 @@ exports.index = (req, res, next) => {
         })
 }
 
+exports.following_tweets_get = [
+
+    passport.authenticate('jwt', { session: false }),
+
+    (req, res, next) => {
+        let postQuantity = req.query.postQuantity;
+        console.log(req.user.following)
+        TweetModel.find({ $and: [ {author: { $in: req.user.following } }, { $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] } ] })
+            .sort({ 'created': -1 })
+            .limit(postQuantity || 12)
+            .populate('author')
+            .populate('retweetOf')
+            .populate('retweets')
+            //.populate('retweetOf.author')
+            .populate({
+                path: 'retweetOf',
+                populate: {
+                    path: 'author retweets', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id profile_image chosenName username author' //dont return all key/values, only the ones that we need
+                },
+            })
+            .populate({
+                path: 'commentOf',
+                populate: {
+                    path: 'author', //need 'author' AND 'retweets' of 'retweetOf' so origional tweet can be displayed
+                    select: '_id chosenName profile_image retweets username' //dont return all key/values, only the ones that we need
+                },
+            })
+            .exec()
+            .then(tweet_list => {
+                res.json(tweet_list);
+            })
+            .catch(err => {
+                return next(err);
+            })
+    }
+]
+
+
 exports.tweet_detail = [
 
     passport.authenticate('jwt', { session: false }),
@@ -94,9 +133,9 @@ exports.tweet_detail = [
                         select: 'author'
                     }
                 })
-                
+
         }
-        
+
         Promise.all([findTweet(req.params.id), findComments(req.params.id, req.query.postQuantity)])
             .then(theTweet => {
                 res.json(theTweet);
@@ -242,19 +281,19 @@ exports.retweet_create = [
                                     author: req.user._id
                                 })
                             tweet.save()
-                            .then(newTweet => {
-                                TweetModel.updateOne({ _id: OGTweetId }, {
-                                    $push: { retweets: newTweet._id }
-                                }).exec();
-                            })
-                            .then(() => {
-                                res.json({
-                                    'message': 'retweet posted'
+                                .then(newTweet => {
+                                    TweetModel.updateOne({ _id: OGTweetId }, {
+                                        $push: { retweets: newTweet._id }
+                                    }).exec();
                                 })
-                            })
-                            .catch(err => {
-                                return next(err);
-                            })
+                                .then(() => {
+                                    res.json({
+                                        'message': 'retweet posted'
+                                    })
+                                })
+                                .catch(err => {
+                                    return next(err);
+                                })
                         }
 
                     })
