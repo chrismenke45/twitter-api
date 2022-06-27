@@ -36,7 +36,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set("trust proxy", 1);
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  proxy: true, // add this when behind a reverse proxy, if you need secure cookies
+  //proxy: true, // add this when behind a reverse proxy, if you need secure cookies
   cookie: {
     sameSite: 'none',
     secure: true,
