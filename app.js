@@ -48,7 +48,7 @@ app.use(passport.session());
 
 const corsOptions = {
   credentials: true,
-  origin: process.env.DEVELOPMENT_CLIENT_URL
+  origin: process.env.DEVELOPMENT_CLIENT_URL_BASE || process.env.DEVELOPMENT_CLIENT_URL
   ///..other options
 };
 
