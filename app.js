@@ -42,7 +42,8 @@ app.use(session({
   cookie: {
     sameSite: 'none',
     secure: true,
-    maxAge: 3999
+    maxAge: 3999,
+    domain: process.env.DEVELOPMENT_CLIENT_URL_BASE || process.env.DEVELOPMENT_CLIENT_URL
   }
 }));
 app.use(passport.initialize());
