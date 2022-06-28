@@ -2,7 +2,7 @@ var createError = require('http-errors');
 var express = require('express');
 var session = require('express-session')
 var path = require('path');
-var cookieParser = require('cookie-parser');
+//var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 require('dotenv').config()
 let mongoose = require('mongoose');
@@ -30,32 +30,21 @@ app.set('view engine', 'jade');
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+//app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.set("trust proxy", 1);
 app.use(session({
   secret: process.env.SESSION_SECRET,
-  saveUninitialized: false,
   resave: false,
-  //proxy: true, // add this when behind a reverse proxy, if you need secure cookies
+  saveUninitialized: false,
   cookie: {
-    sameSite: 'none',
-    secure: true,
-    maxAge: 3999,
-    domain: process.env.DEVELOPMENT_CLIENT_URL_BASE || process.env.DEVELOPMENT_CLIENT_URL
+    maxAge: 3999
   }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
 
-const corsOptions = {
-  credentials: true,
-  origin: process.env.DEVELOPMENT_CLIENT_URL_BASE || process.env.DEVELOPMENT_CLIENT_URL
-  ///..other options
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

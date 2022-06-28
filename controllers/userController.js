@@ -26,9 +26,8 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
                             expiresIn: expireTime.toString()
                         }
                         const token = jwt.sign(theNewUser._doc, process.env.jwtSecret, { expiresIn: "1h" });
-                        res.cookie('jwt', token, { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true });
-                        res.cookie('user', encodeURIComponent(JSON.stringify(theNewUser._doc)), { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true })
-                        res.cookie('test', 'yeehaw', { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true })
+                        res.cookie('jwt', token, { maxAge: 3999 });
+                        res.cookie('user', encodeURIComponent(JSON.stringify(theNewUser._doc)), { maxAge: 3999 })
                         res.redirect(clientURL + '/set-credentials')
                     })
             } else {
@@ -37,9 +36,8 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
                     expiresIn: expireTime.toString()
                 }
                 const token = jwt.sign(currentUser, process.env.jwtSecret, { expiresIn: "1h" });
-                res.cookie('jwt', token, { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true });
-                res.cookie('user', encodeURIComponent(JSON.stringify(currentUser)), { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true })
-                res.cookie('test', 'yeehaw', { maxAge: 3999, httpOnly: false, sameSite: 'none', secure: true })
+                res.cookie('jwt', token, { maxAge: 3999 });
+                res.cookie('user', encodeURIComponent(JSON.stringify(currentUser)), { maxAge: 3999 })
                 res.redirect(clientURL + '/set-credentials')
             }
         })
