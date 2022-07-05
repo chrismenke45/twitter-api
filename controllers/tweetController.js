@@ -61,7 +61,7 @@ exports.following_tweets_get = [
 
     (req, res, next) => {
         let postQuantity = req.query.postQuantity;
-        TweetModel.find({ $and: [ {author: { $in: req.user.following } }, { $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] } ] })
+        TweetModel.find({ $and: [{ $and: [ {author: req.user._id }, { $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] } ] }, { $and: [ {author: { $in: req.user.following } }, { $or: [{ commentOf: { $exists: false } }, { commentOf: { $eq: null } }] } ] } ] })
             .sort({ 'created': -1 })
             .limit(postQuantity || 12)
             .populate('author')
