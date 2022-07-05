@@ -61,7 +61,7 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
     expireTime.setHours(expireTime.getHours() + 1);
     UserModel.findOne({ twitterId: user.twitterId })
         .then(currentUser => {
-            if (!currentUser._id) {//Need to get rid of this if statement and only have first option if we want user image/name to update when it does on twitter
+            if (!currentUser || !currentUser._id) {//Need to get rid of this if statement and only have first option if we want user image/name to update when it does on twitter
                 let newUser = new UserModel(user)
                 newUser.save()
                     .then(theNewUser => {
