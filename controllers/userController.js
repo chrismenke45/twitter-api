@@ -149,7 +149,7 @@ exports.suggested_get = [
     passport.authenticate('jwt', { session: false }),
 
     (req, res, next) => {
-        UserModel.find({"_id": { $ne: req.user._id }})
+        UserModel.find({ $and: [{"_id": { $ne: req.user._id }}, {"_id": { $nin: req.user.following }} ] })
         .sort({ 'created': -1 })
         .limit(3)
         .exec()
