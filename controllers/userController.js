@@ -74,7 +74,7 @@ exports.loggedin_get = [passport.authenticate('twitter', { session: false }), (r
                         })
                         newToken.save()
                         .then(theToken => {
-                            res.redirect(clientURL + '/set-credentials' + theToken._id)
+                            res.redirect(clientURL + '/set-credentials?id=' + theToken._id)
                         })
                     })
             } else {
