@@ -1,1 +1,1 @@
-This is the backend to the twitter clone I made.  It allows users to sign in with twitter O-Auth to prepopulate their account.  You can check it out here: https://chrismenke45.github.io/twitter-client
+This is the backend to the twitter clone I made.  It allows users to sign in with twitter O-Auth to prepopulate their account. It also runs database queries to access data for the site. It was originally hosted on Heroku but has been moved to Render.com (Heroku ended its free tier :( )  You can check out the site here: https://chrismenke45.github.io/twitter-client
